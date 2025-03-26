@@ -47,7 +47,7 @@ export const ApiTokenInput: React.FC<ApiTokenInputProps> = ({
           <DialogTitle>Conectar com Beds24 API v2</DialogTitle>
           <DialogDescription>
             Cole seu Access Token da API Beds24 v2 abaixo. 
-            Você pode encontrar seu token no painel Beds24 em Configurações > API.
+            Você pode encontrar seu token no painel Beds24 em Configurações &rarr; API.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
