@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -16,6 +15,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Save, Upload, Trash2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 // Form schema
 const propertyFormSchema = z.object({

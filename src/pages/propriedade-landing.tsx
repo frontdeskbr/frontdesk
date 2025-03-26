@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { DateRange } from 'react-day-picker';
@@ -49,6 +48,7 @@ const MOCK_PROPERTIES = {
       'Não são permitidas festas ou eventos',
       'O horário de silêncio é das 22:00 às 08:00'
     ],
+    theme: 'light', // Adding theme property here
     suites: [
       {
         id: 's1',
@@ -159,7 +159,7 @@ const MOCK_PROPERTIES = {
       'Não são permitidas festas ou eventos',
       'O horário de silêncio é das 22:00 às 08:00'
     ],
-    theme: 'dark',
+    theme: 'dark', // Theme property already exists here
     suites: [
       {
         id: 's1',
