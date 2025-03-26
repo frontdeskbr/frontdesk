@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Grid3X3, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Grid3X3, X, Share } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface PropertyGalleryProps {
   images: string[];
@@ -29,29 +31,71 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ images, title 
     setShowFullGallery(true);
   };
 
+  const displayedImages = images.slice(0, 5); // Show only 5 images in the grid
+  const hasMoreImages = images.length > 5;
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Link copiado para a área de transferência!");
+  };
+
   return (
     <>
       <div className="relative">
+        {/* Share button */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="absolute right-4 top-4 z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm"
+          onClick={handleShare}
+        >
+          <Share size={16} className="mr-2" />
+          Compartilhar
+        </Button>
+
         {/* Main gallery grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mb-8">
           {/* Main image */}
           <div 
-            className="relative col-span-1 md:row-span-2 h-64 md:h-full cursor-pointer overflow-hidden rounded-lg"
+            className="relative md:col-span-8 row-span-2 h-64 md:h-[400px] cursor-pointer overflow-hidden rounded-lg"
             onClick={() => setShowFullGallery(true)}
           >
             <img 
-              src={images[0]} 
+              src={displayedImages[0]} 
               alt={`${title} - Imagem principal`}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
             />
+            
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-4 left-4">
+                <span className="text-white font-semibold text-lg drop-shadow-md">{title}</span>
+              </div>
+            </div>
           </div>
           
-          {/* Grid of 4 smaller images */}
-          <div className="grid grid-cols-2 gap-2 h-64">
-            {images.slice(1, 5).map((image, index) => (
+          {/* Grid of 4 smaller images - only visible on md screens and up */}
+          <div className="hidden md:grid md:col-span-4 grid-cols-2 gap-2">
+            {displayedImages.slice(1, 5).map((image, index) => (
               <div 
                 key={index} 
-                className="relative cursor-pointer overflow-hidden rounded-lg"
+                className="relative cursor-pointer overflow-hidden rounded-lg h-[197px]"
+                onClick={() => handleThumbnailClick(index + 1)}
+              >
+                <img 
+                  src={image} 
+                  alt={`${title} - Imagem ${index + 2}`} 
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+            ))}
+          </div>
+          
+          {/* Small images for mobile - visible only on small screens */}
+          <div className="md:hidden grid grid-cols-2 gap-2">
+            {displayedImages.slice(1, 3).map((image, index) => (
+              <div 
+                key={index} 
+                className="relative cursor-pointer overflow-hidden rounded-lg h-36"
                 onClick={() => handleThumbnailClick(index + 1)}
               >
                 <img 
@@ -65,7 +109,7 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({ images, title 
         </div>
 
         {/* View all photos button */}
-        {images.length > 5 && (
+        {hasMoreImages && (
           <button 
             className="absolute bottom-4 right-4 bg-white dark:bg-slate-800 shadow-md rounded-md px-3 py-2 flex items-center gap-2 text-sm font-medium"
             onClick={() => setShowFullGallery(true)}

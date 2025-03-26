@@ -14,14 +14,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     <div className="min-h-screen flex">
       <Sidebar />
       <div className="flex-1 ml-[70px] lg:ml-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 sm:px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex flex-1 items-center justify-end">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex-1 flex items-center">
+            <h1 className="text-xl font-semibold">
+              {/* Page title will be inserted by the page component */}
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
             <UserButton />
           </div>
         </header>
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <motion.main
-            className="flex-1 px-3 py-3 sm:px-4 sm:py-4"
+            className="flex-1 px-10 py-8"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}

@@ -1,18 +1,20 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO, addMonths } from "date-fns";
+import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO, addMonths, differenceInDays, addWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Filter, Share } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "@/context/theme-context";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Mock bookings data
 const MOCK_BOOKINGS = [
@@ -26,6 +28,7 @@ const MOCK_BOOKINGS = [
     status: "confirmed", // confirmed, pending, cancelled
     channel: "booking.com",
     whatsapp: "+5511987654321",
+    price: 780,
   },
   {
     id: "b2",
@@ -37,6 +40,7 @@ const MOCK_BOOKINGS = [
     status: "confirmed",
     channel: "airbnb",
     whatsapp: "+5511976543210",
+    price: 950,
   },
   {
     id: "b3",
@@ -48,6 +52,7 @@ const MOCK_BOOKINGS = [
     status: "pending",
     channel: "expedia",
     whatsapp: "+5511965432109",
+    price: 1200,
   },
   {
     id: "b4",
@@ -59,6 +64,19 @@ const MOCK_BOOKINGS = [
     status: "cancelled",
     channel: "direct",
     whatsapp: "+5511954321098",
+    price: 850,
+  },
+  {
+    id: "b5",
+    propertyId: "1",
+    roomId: "r1",
+    guestName: "Ricardo Torres",
+    checkIn: "2023-11-24",
+    checkOut: "2023-11-26",
+    status: "confirmed",
+    channel: "booking.com",
+    whatsapp: "+5511932165478",
+    price: 680,
   },
 ];
 
@@ -81,38 +99,50 @@ const MOCK_ROOMS = {
   ],
 };
 
+type ViewMode = "week" | "month";
+
 const Calendario: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedProperty, setSelectedProperty] = useState<string>("all");
   const [showBookingDetails, setShowBookingDetails] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
   const { primaryColor } = useTheme();
   
-  // Generate calendar dates
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  useEffect(() => {
+    // Set the page title in the header
+    document.title = "Calendário - Frontdesk";
+  }, []);
   
-  // Calculate the day of week for the month start (0 = Sunday)
-  const startDayOfWeek = monthStart.getDay();
+  // Calculate calendar days based on viewMode
+  const calculateCalendarDays = () => {
+    if (viewMode === "week") {
+      const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
+      const end = endOfWeek(currentDate, { weekStartsOn: 0 });
+      return eachDayOfInterval({ start, end });
+    } else {
+      const monthStart = startOfMonth(currentDate);
+      const monthEnd = endOfMonth(currentDate);
+      
+      // Complete first week
+      const startDayOfWeek = monthStart.getDay();
+      const daysBeforeMonth = [];
+      for (let i = startDayOfWeek; i > 0; i--) {
+        daysBeforeMonth.push(addDays(monthStart, -i));
+      }
+      
+      // Complete last week
+      const endDayOfWeek = monthEnd.getDay();
+      const daysAfterMonth = [];
+      for (let i = 1; i < (7 - endDayOfWeek); i++) {
+        daysAfterMonth.push(addDays(monthEnd, i));
+      }
+      
+      return [...daysBeforeMonth, ...eachDayOfInterval({ start: monthStart, end: monthEnd }), ...daysAfterMonth];
+    }
+  };
   
-  // Add days before month start to complete the week
-  const daysBeforeMonth = [];
-  for (let i = startDayOfWeek; i > 0; i--) {
-    daysBeforeMonth.push(addDays(monthStart, -i));
-  }
-  
-  // Calculate the day of week for the month end
-  const endDayOfWeek = monthEnd.getDay();
-  
-  // Add days after month end to complete the week
-  const daysAfterMonth = [];
-  for (let i = 1; i < (7 - endDayOfWeek); i++) {
-    daysAfterMonth.push(addDays(monthEnd, i));
-  }
-  
-  // All displayed days
-  const allDays = [...daysBeforeMonth, ...daysInMonth, ...daysAfterMonth];
+  const allDays = calculateCalendarDays();
   
   // Create weeks structure
   const weeks = [];
@@ -136,12 +166,20 @@ const Calendario: React.FC = () => {
   
   const rooms = getFilteredRooms();
   
-  const previousMonth = () => {
-    setCurrentDate(prevDate => addMonths(prevDate, -1));
+  const previousPeriod = () => {
+    if (viewMode === "week") {
+      setCurrentDate(prevDate => addDays(prevDate, -7));
+    } else {
+      setCurrentDate(prevDate => addMonths(prevDate, -1));
+    }
   };
   
-  const nextMonth = () => {
-    setCurrentDate(prevDate => addMonths(prevDate, 1));
+  const nextPeriod = () => {
+    if (viewMode === "week") {
+      setCurrentDate(prevDate => addDays(prevDate, 7));
+    } else {
+      setCurrentDate(prevDate => addMonths(prevDate, 1));
+    }
   };
   
   const goToToday = () => {
@@ -168,17 +206,15 @@ const Calendario: React.FC = () => {
   };
   
   const getChannelBadge = (channel: string) => {
-    const badgeClassName = `bg-${primaryColor === 'purple' ? 'purple' : primaryColor}-500`;
-    
     switch (channel) {
       case "booking.com":
-        return <Badge className="bg-blue-500">Booking.com</Badge>;
+        return <Badge className="bg-blue-500/80">Booking.com</Badge>;
       case "airbnb":
-        return <Badge className="bg-rose-500">Airbnb</Badge>;
+        return <Badge className="bg-rose-500/80">Airbnb</Badge>;
       case "expedia":
-        return <Badge className="bg-yellow-500">Expedia</Badge>;
+        return <Badge className="bg-yellow-500/80">Expedia</Badge>;
       case "direct":
-        return <Badge className={badgeClassName}>Direto</Badge>;
+        return <Badge className={`bg-${primaryColor}-500/80`}>Direto</Badge>;
       default:
         return <Badge>{channel}</Badge>;
     }
@@ -191,47 +227,136 @@ const Calendario: React.FC = () => {
   const getStatusClass = (status: string) => {
     switch (status) {
       case "confirmed":
-        return "reservation-confirmed";
+        return "reservation-confirmed bg-green-100 border-green-400 dark:bg-green-950/40 dark:border-green-700";
       case "pending":
-        return "reservation-pending";
+        return "reservation-pending bg-yellow-100 border-yellow-400 dark:bg-yellow-950/40 dark:border-yellow-700";
       case "cancelled":
-        return "reservation-cancelled";
+        return "reservation-cancelled bg-red-100 border-red-400 dark:bg-red-950/40 dark:border-red-700";
       default:
         return "";
     }
   };
   
+  const getPeriodLabel = () => {
+    if (viewMode === "week") {
+      const start = startOfWeek(currentDate, { weekStartsOn: 0 });
+      const end = endOfWeek(currentDate, { weekStartsOn: 0 });
+      return `${format(start, "dd")} - ${format(end, "dd")} de ${format(end, "MMMM yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}`;
+    } else {
+      return format(currentDate, "MMMM yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase());
+    }
+  };
+  
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  
+  // Function to calculate position and width of booking bar
+  const calculateBookingPosition = (booking: any, date: Date) => {
+    const checkIn = parseISO(booking.checkIn);
+    const checkOut = parseISO(booking.checkOut);
+    
+    // Check if this is the check-in day
+    const isCheckInDay = isSameDay(date, checkIn);
+    // Check if this is the check-out day
+    const isCheckOutDay = isSameDay(date, checkOut);
+    
+    let styles = {};
+    
+    if (isCheckInDay && isCheckOutDay) {
+      // For same-day bookings
+      styles = {
+        left: '20%',
+        width: '60%',
+        borderRadius: '20px'
+      };
+    } else if (isCheckInDay) {
+      // Start in the middle of the cell
+      styles = {
+        left: '50%',
+        width: '50%',
+        borderTopLeftRadius: '20px',
+        borderBottomLeftRadius: '20px',
+        borderRight: 'none'
+      };
+    } else if (isCheckOutDay) {
+      // End in the middle of the cell
+      styles = {
+        left: '0',
+        width: '50%',
+        borderTopRightRadius: '20px',
+        borderBottomRightRadius: '20px',
+        borderLeft: 'none'
+      };
+    } else {
+      // Full cell width
+      styles = {
+        left: '0',
+        width: '100%',
+        borderRadius: '0',
+        borderLeft: 'none',
+        borderRight: 'none'
+      };
+    }
+    
+    return styles;
+  };
+  
+  const handleShareCalendar = () => {
+    // Implement share functionality
+    toast.success("Link do calendário copiado para a área de transferência!");
+  };
 
   return (
     <DashboardLayout>
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
           <PageHeader 
             title="Calendário de Reservas"
             description="Visualize e gerencie reservas por quartos e datas"
           />
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleShareCalendar}>
+              <Share className="h-4 w-4 mr-2" />
+              Compartilhar
+            </Button>
+          </div>
         </div>
         
         <Card className="mb-4">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={previousMonth}>
+                <Button variant="outline" size="icon" onClick={previousPeriod}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <div className="text-lg font-medium min-w-[150px] text-center">
-                  {format(currentDate, "MMMM yyyy", { locale: ptBR }).replace(/^\w/, c => c.toUpperCase())}
+                <div className="text-lg font-medium min-w-[180px] text-center">
+                  {getPeriodLabel()}
                 </div>
-                <Button variant="outline" size="icon" onClick={nextMonth}>
+                <Button variant="outline" size="icon" onClick={nextPeriod}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={goToToday}>
                   Hoje
                 </Button>
+                <div className="flex items-center gap-2 ml-2">
+                  <Button
+                    variant={viewMode === "week" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setViewMode("week")}
+                  >
+                    Semana
+                  </Button>
+                  <Button 
+                    variant={viewMode === "month" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setViewMode("month")}
+                  >
+                    Mês
+                  </Button>
+                </div>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Filter size={16} className="text-muted-foreground" />
                   <span className="text-sm font-medium">Propriedade:</span>
@@ -304,7 +429,8 @@ const Calendario: React.FC = () => {
                           key={`date-${dateIndex}`}
                           className={cn(
                             "p-2 text-center text-sm",
-                            !isSameMonth(date, currentDate) && "text-muted-foreground"
+                            !isSameMonth(date, currentDate) && "text-muted-foreground",
+                            isSameDay(date, new Date()) && "bg-primary/5 font-medium"
                           )}
                         >
                           {format(date, "d")}
@@ -337,11 +463,16 @@ const Calendario: React.FC = () => {
                                       <button
                                         onClick={() => handleBookingClick(booking)}
                                         className={cn(
-                                          "absolute top-1/2 left-0 transform -translate-y-1/2 w-full px-1 py-2 mx-auto border text-xs",
+                                          "absolute top-1/2 transform -translate-y-1/2 border text-sm",
                                           getStatusClass(booking.status)
                                         )}
+                                        style={calculateBookingPosition(booking, date)}
                                       >
-                                        {booking.guestName}
+                                        <div className="flex items-center gap-1 px-2 py-1 truncate">
+                                          {getChannelBadge(booking.channel)}
+                                          <span className="truncate font-medium">{booking.guestName}</span>
+                                          <span className="text-xs ml-auto">R${booking.price}</span>
+                                        </div>
                                       </button>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -349,6 +480,7 @@ const Calendario: React.FC = () => {
                                         <p className="font-bold">{booking.guestName}</p>
                                         <p>Check-in: {format(parseISO(booking.checkIn), "dd/MM/yyyy")}</p>
                                         <p>Check-out: {format(parseISO(booking.checkOut), "dd/MM/yyyy")}</p>
+                                        <p>Valor: R$ {booking.price}</p>
                                       </div>
                                     </TooltipContent>
                                   </Tooltip>
@@ -402,6 +534,11 @@ const Calendario: React.FC = () => {
                   <div className="font-medium">{format(parseISO(selectedBooking.checkOut), "dd/MM/yyyy")}</div>
                   <div className="text-sm">12:00</div>
                 </div>
+              </div>
+              
+              <div>
+                <label className="text-sm text-muted-foreground block mb-1">Valor</label>
+                <div className="font-medium">R$ {selectedBooking.price}</div>
               </div>
               
               <div>

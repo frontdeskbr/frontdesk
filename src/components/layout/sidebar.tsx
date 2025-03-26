@@ -17,7 +17,6 @@ import { TextLogo } from "@/assets/custom-logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ColorPickerMenu } from "../ui/color-picker-menu";
 
 interface SidebarLinkProps {
   to: string;
@@ -115,7 +114,7 @@ export const Sidebar: React.FC = () => {
             <TextLogo />
           ) : (
             <div className="mx-auto">
-              <TextLogo className="w-8 h-8" size={28} />
+              <TextLogo className="w-8 h-8" size={28} logoOnly={true} />
             </div>
           )}
           

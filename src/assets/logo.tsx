@@ -4,6 +4,7 @@ import React from "react";
 interface LogoProps {
   className?: string;
   size?: number;
+  logoOnly?: boolean;
 }
 
 export const FrontdeskLogo: React.FC<LogoProps> = ({ 
@@ -36,12 +37,13 @@ export const FrontdeskLogo: React.FC<LogoProps> = ({
 
 export const TextLogo: React.FC<LogoProps> = ({ 
   className = "", 
-  size = 40 
+  size = 40,
+  logoOnly = false
 }) => {
   return (
     <div className={`flex items-center ${className}`}>
       <FrontdeskLogo size={size} />
-      <span className="ml-2 font-semibold text-xl">Frontdesk</span>
+      {!logoOnly && <span className="ml-2 font-semibold text-xl">Frontdesk</span>}
     </div>
   );
 };
