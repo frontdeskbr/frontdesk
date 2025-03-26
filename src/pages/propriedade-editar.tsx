@@ -1,157 +1,183 @@
 
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApiTokenInput } from "@/components/ui/api-token-input";
+import { PropertyICal } from "@/components/property/property-ical";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { toast } from "sonner";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Building2, Clock, Image, MapPin, Trash2, Upload, Plus } from "lucide-react";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Save, Upload, Trash2 } from "lucide-react";
 
-// Mock property data (would typically come from an API)
-const mockProperty = {
-  id: "1",
-  slug: "vila-mariana-suites",
-  name: "Vila Mariana Suites",
-  propId: "P12345",
-  address: "Rua Domingos de Morais, 2187 - Vila Mariana, São Paulo, SP",
-  description: "Apartamentos modernos próximos ao metrô Vila Mariana com fácil acesso às principais regiões de São Paulo. Unidades totalmente equipadas com cozinha completa, ar-condicionado e Wi-Fi de alta velocidade.",
-  whatsapp: "+5511987654321",
-  apiToken: "abcdef123456",
-  images: [
-    "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=500&q=80",
-    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=500&q=80",
-    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=500&q=80",
-  ],
-  checkIn: "14:00",
-  checkOut: "12:00",
-  status: "active",
-  template: "light",
-};
-
+// Form schema
 const propertyFormSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  propId: z.string().min(1, "ID da propriedade é obrigatório"),
-  address: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres"),
-  description: z.string().optional(),
-  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
-  checkIn: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato inválido (HH:MM)"),
-  checkOut: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato inválido (HH:MM)"),
-  template: z.enum(["light", "dark"]),
-  status: z.enum(["active", "inactive"]),
+  name: z.string().min(3, {
+    message: "O nome da propriedade deve ter pelo menos 3 caracteres.",
+  }),
+  address: z.string().min(5, {
+    message: "Endereço é obrigatório.",
+  }),
+  city: z.string().min(2, {
+    message: "Cidade é obrigatória.",
+  }),
+  state: z.string().min(2, {
+    message: "Estado é obrigatório.",
+  }),
+  zipCode: z.string().min(5, {
+    message: "CEP é obrigatório.",
+  }),
+  propertyType: z.string({
+    required_error: "Selecione um tipo de propriedade.",
+  }),
+  description: z.string().min(10, {
+    message: "A descrição deve ter pelo menos 10 caracteres.",
+  }),
+  template: z.string().optional(),
 });
 
+// Types based on the schema
 type PropertyFormValues = z.infer<typeof propertyFormSchema>;
 
-const PropriedadeEditar = () => {
+// Sample data for the property being edited
+const mockProperty = {
+  id: "property-1",
+  name: "Vila Mariana Suites",
+  address: "Rua Domingos de Morais, 2187",
+  city: "São Paulo",
+  state: "SP",
+  zipCode: "04035-000",
+  propertyType: "hotel",
+  description: "Localizado no coração de Vila Mariana, um dos bairros mais charmosos de São Paulo, o Vila Mariana Suites oferece acomodações modernas e confortáveis para suas estadias na cidade.",
+  template: "light",
+  photos: [
+    { id: "1", url: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=2070&auto=format&fit=crop" },
+    { id: "2", url: "https://images.unsplash.com/photo-1540518614846-7eded433c457?q=80&w=1957&auto=format&fit=crop" },
+    { id: "3", url: "https://images.unsplash.com/photo-1537726235470-8504e3beef77?q=80&w=2070&auto=format&fit=crop" },
+    { id: "4", url: "https://images.unsplash.com/photo-1600585152220-90363fe7e115?q=80&w=2070&auto=format&fit=crop" },
+    { id: "5", url: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=2070&auto=format&fit=crop" },
+    { id: "6", url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=2158&auto=format&fit=crop" },
+  ],
+  rooms: [
+    { id: "room-1", name: "Studio Deluxe", number: "101", capacity: 2 },
+    { id: "room-2", name: "Apartamento Premium", number: "102", capacity: 3 },
+    { id: "room-3", name: "Suíte Master", number: "201", capacity: 2 },
+  ],
+  apiKeys: {
+    booking: "bk_api_12345",
+    airbnb: "ab_api_12345",
+  }
+};
+
+const PropertyEdit = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [images, setImages] = useState<string[]>(mockProperty.images);
-  const [apiToken, setApiToken] = useState<string>(mockProperty.apiToken || "");
+  const [photos, setPhotos] = useState(mockProperty.photos);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   
+  // Form
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema),
     defaultValues: {
       name: mockProperty.name,
-      propId: mockProperty.propId,
       address: mockProperty.address,
+      city: mockProperty.city,
+      state: mockProperty.state,
+      zipCode: mockProperty.zipCode,
+      propertyType: mockProperty.propertyType,
       description: mockProperty.description,
-      whatsapp: mockProperty.whatsapp,
-      checkIn: mockProperty.checkIn,
-      checkOut: mockProperty.checkOut,
-      template: mockProperty.template as "light" | "dark",
-      status: mockProperty.status as "active" | "inactive",
+      template: mockProperty.template,
     },
   });
-  
+
   const onSubmit = (data: PropertyFormValues) => {
-    // In a real app, you would save the data to your backend
-    console.log({ ...data, images, apiToken });
     toast.success("Propriedade atualizada com sucesso!");
-    navigate(`/propriedade/${mockProperty.slug}`);
+    console.log(data);
   };
-  
-  const handleApiTokenSave = (token: string) => {
-    setApiToken(token);
-    toast.success("Token API salvo com sucesso!");
+
+  // Drag and drop functionality for photos
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    setDraggingIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.currentTarget.classList.add("opacity-50");
   };
-  
-  const handleImageUpload = () => {
-    // Mock image upload
-    const newImage = "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=500&q=80";
-    setImages([...images, newImage]);
-    toast.success("Imagem adicionada com sucesso!");
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    
+    if (draggingIndex === null || draggingIndex === index) return;
+    
+    // Reorder the photos array
+    const newPhotos = [...photos];
+    const draggedItem = newPhotos[draggingIndex];
+    newPhotos.splice(draggingIndex, 1);
+    newPhotos.splice(index, 0, draggedItem);
+    
+    setPhotos(newPhotos);
+    setDraggingIndex(index);
   };
-  
-  const handleImageDelete = (index: number) => {
-    const newImages = [...images];
-    newImages.splice(index, 1);
-    setImages(newImages);
-    toast.success("Imagem removida com sucesso!");
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    e.currentTarget.classList.remove("opacity-50");
+    setDraggingIndex(null);
+  };
+
+  const handleDeletePhoto = (index: number) => {
+    const newPhotos = [...photos];
+    newPhotos.splice(index, 1);
+    setPhotos(newPhotos);
+    toast.success("Foto removida com sucesso!");
   };
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <Link to={`/propriedade/${mockProperty.slug}`} className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-          <ArrowLeft size={16} className="mr-1" />
-          Voltar para detalhes da propriedade
-        </Link>
-      </div>
-      
       <PageHeader 
-        title="Editar Propriedade"
-        description={mockProperty.name}
-      />
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <Tabs defaultValue="general">
-            <TabsList className="mb-6">
-              <TabsTrigger value="general">Geral</TabsTrigger>
-              <TabsTrigger value="appearance">Aparência</TabsTrigger>
-              <TabsTrigger value="images">Imagens</TabsTrigger>
-              <TabsTrigger value="api">API e Integrações</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="general">
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Building2 size={18} />
-                      Informações Básicas
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+        title="Editar Propriedade" 
+        description={`Editando: ${mockProperty.name}`}
+      >
+        <Button onClick={form.handleSubmit(onSubmit)}>
+          <Save className="mr-2 h-4 w-4" />
+          Salvar Alterações
+        </Button>
+      </PageHeader>
+
+      <Tabs defaultValue="general" className="mt-6">
+        <TabsList className="mb-6">
+          <TabsTrigger value="general">Informações Gerais</TabsTrigger>
+          <TabsTrigger value="rooms">Quartos</TabsTrigger>
+          <TabsTrigger value="photos">Fotos</TabsTrigger>
+          <TabsTrigger value="api">API e Integrações</TabsTrigger>
+          <TabsTrigger value="ical">iCal</TabsTrigger>
+        </TabsList>
+        
+        {/* General Information */}
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações Gerais</CardTitle>
+              <CardDescription>
+                Informações básicas sobre sua propriedade.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome da Propriedade</FormLabel>
+                          <FormLabel>Nome</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input placeholder="Nome da propriedade" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -160,359 +186,316 @@ const PropriedadeEditar = () => {
                     
                     <FormField
                       control={form.control}
-                      name="propId"
+                      name="propertyType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>ID da Propriedade</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            ID único para identificação no sistema Beds24
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <FormControl>
-                            <select
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              {...field}
-                            >
-                              <option value="active">Ativo</option>
-                              <option value="inactive">Inativo</option>
-                            </select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Descrição</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field} 
-                              rows={4} 
-                              placeholder="Descreva sua propriedade..." 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-                
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <MapPin size={18} />
-                        Localização e Contato
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="address"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Endereço Completo</FormLabel>
+                          <FormLabel>Tipo de Propriedade</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={3} 
-                                placeholder="Rua, número, bairro, cidade, estado, CEP..." 
-                              />
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o tipo de propriedade" />
+                              </SelectTrigger>
                             </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="whatsapp"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>WhatsApp</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                placeholder="+5500000000000" 
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Número com código do país (ex: +55 para Brasil)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Clock size={18} />
-                        Horários
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="checkIn"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Check-in</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  placeholder="14:00" 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="checkOut"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Check-out</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  {...field} 
-                                  placeholder="12:00" 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="appearance">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Aparência do Site</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
+                            <SelectContent>
+                              <SelectItem value="hotel">Hotel</SelectItem>
+                              <SelectItem value="pousada">Pousada</SelectItem>
+                              <SelectItem value="hostel">Hostel</SelectItem>
+                              <SelectItem value="apartamento">Apartamento</SelectItem>
+                              <SelectItem value="casa">Casa</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="template"
+                    name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Template</FormLabel>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                          <div
-                            className={`border-2 rounded-md overflow-hidden cursor-pointer transition-all ${
-                              field.value === "light" ? "border-primary ring-2 ring-primary ring-opacity-50" : "border-border hover:border-muted-foreground"
-                            }`}
-                            onClick={() => form.setValue("template", "light")}
-                          >
-                            <div className="bg-white p-4">
-                              <h3 className="font-semibold text-black mb-1">Template Claro</h3>
-                              <p className="text-gray-600 text-sm">Design limpo com tema claro</p>
-                            </div>
-                            <div className="h-40 bg-gray-100 flex items-center justify-center border-t">
-                              <div className="text-center">
-                                <Image className="h-10 w-10 mb-2 text-gray-400 mx-auto" />
-                                <p className="text-sm text-gray-500">Prévia do tema claro</p>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div
-                            className={`border-2 rounded-md overflow-hidden cursor-pointer transition-all ${
-                              field.value === "dark" ? "border-primary ring-2 ring-primary ring-opacity-50" : "border-border hover:border-muted-foreground"
-                            }`}
-                            onClick={() => form.setValue("template", "dark")}
-                          >
-                            <div className="bg-slate-900 p-4">
-                              <h3 className="font-semibold text-white mb-1">Template Escuro</h3>
-                              <p className="text-slate-400 text-sm">Design premium com tema escuro</p>
-                            </div>
-                            <div className="h-40 bg-slate-800 flex items-center justify-center border-t border-slate-700">
-                              <div className="text-center">
-                                <Image className="h-10 w-10 mb-2 text-slate-400 mx-auto" />
-                                <p className="text-sm text-slate-400">Prévia do tema escuro</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <FormLabel>Endereço</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Endereço completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cidade</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Cidade" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Estado" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CEP</FormLabel>
+                          <FormControl>
+                            <Input placeholder="CEP" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Descrição da propriedade" 
+                            rows={5}
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Descreva sua propriedade com detalhes para os hóspedes.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   
-                  <div>
-                    <Label>Prévia</Label>
-                    <div className="border rounded-md mt-2 overflow-hidden">
-                      <div className={`p-4 ${form.watch("template") === "dark" ? "bg-slate-900 text-white" : "bg-white text-black"}`}>
-                        <h3 className="text-xl font-semibold">{form.watch("name")}</h3>
-                        <p className={`${form.watch("template") === "dark" ? "text-slate-400" : "text-gray-500"}`}>{form.watch("address")}</p>
-                      </div>
-                      {images.length > 0 && (
-                        <div className={`${form.watch("template") === "dark" ? "bg-slate-800" : "bg-gray-100"}`}>
-                          <AspectRatio ratio={16 / 9}>
-                            <img 
-                              src={images[0]} 
-                              alt="Preview" 
-                              className="object-cover w-full h-full"
-                            />
-                          </AspectRatio>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="images">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Image size={18} />
-                    Galeria de Imagens
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium">Imagens da Propriedade</h3>
-                        <p className="text-sm text-muted-foreground">
-                          A primeira imagem será usada como capa
-                        </p>
-                      </div>
-                      <Button onClick={handleImageUpload} className="gap-1">
-                        <Upload size={16} />
-                        Adicionar Imagem
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                      {images.map((image, index) => (
-                        <div key={index} className="relative group rounded-md overflow-hidden border">
-                          <AspectRatio ratio={4 / 3}>
-                            <img
-                              src={image}
-                              alt={`Imagem ${index + 1}`}
-                              className="object-cover w-full h-full"
-                            />
-                          </AspectRatio>
-                          
-                          {index === 0 && (
-                            <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 text-xs rounded">
-                              Imagem de Capa
+                  <FormField
+                    control={form.control}
+                    name="template"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Template do Site</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o template" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="light">Claro</SelectItem>
+                            <SelectItem value="dark">Escuro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Este template será usado na página pública da sua propriedade.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button onClick={form.handleSubmit(onSubmit)}>
+                <Save className="mr-2 h-4 w-4" />
+                Salvar Alterações
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Rooms */}
+        <TabsContent value="rooms">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Quartos</CardTitle>
+                <CardDescription>
+                  Gerenciar os quartos da sua propriedade.
+                </CardDescription>
+              </div>
+              <Button>Adicionar Quarto</Button>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <div className="relative w-full overflow-auto">
+                  <table className="w-full caption-bottom text-sm">
+                    <thead className="[&_tr]:border-b">
+                      <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        <th className="h-12 px-4 text-left align-middle font-medium">Nome</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Número</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Capacidade</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="[&_tr:last-child]:border-0">
+                      {mockProperty.rooms.map((room) => (
+                        <tr key={room.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                          <td className="p-4 align-middle">{room.name}</td>
+                          <td className="p-4 align-middle">{room.number}</td>
+                          <td className="p-4 align-middle">{room.capacity} pessoas</td>
+                          <td className="p-4 align-middle">
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">Editar</Button>
+                              <Button variant="destructive" size="sm">Remover</Button>
                             </div>
-                          )}
-                          
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => handleImageDelete(index)}
-                            >
-                              <Trash2 size={16} />
-                            </Button>
-                          </div>
-                        </div>
+                          </td>
+                        </tr>
                       ))}
-                      
-                      <Button
-                        variant="outline"
-                        className="h-full min-h-[200px] border-dashed flex flex-col items-center justify-center"
-                        onClick={handleImageUpload}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Photos */}
+        <TabsContent value="photos">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Fotos</CardTitle>
+                <CardDescription>
+                  Gerenciar as fotos da sua propriedade. Arraste para reordenar.
+                </CardDescription>
+              </div>
+              <Button>
+                <Upload className="mr-2 h-4 w-4" />
+                Adicionar Fotos
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {photos.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    className="relative border rounded-md overflow-hidden cursor-move transition-all"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    {index === 0 && (
+                      <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded-md">
+                        Principal
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2">
+                      <Button 
+                        variant="destructive" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleDeletePhoto(index)}
                       >
-                        <Plus size={24} className="mb-2" />
-                        <span>Adicionar imagem</span>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
+                    <img 
+                      src={photo.url} 
+                      alt={`Foto ${index + 1}`} 
+                      className="w-full h-48 object-cover"
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="api">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Integrações API</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label>Token API Beds24</Label>
-                    <div className="mt-2">
-                      <ApiTokenInput
-                        onSave={handleApiTokenSave}
-                        savedToken={apiToken}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* API and Integrations */}
+        <TabsContent value="api">
+          <Card>
+            <CardHeader>
+              <CardTitle>API e Integrações</CardTitle>
+              <CardDescription>
+                Gerenciar integrações com outros serviços.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4">APIs de Canais</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="booking-api">Booking.com API Key</Label>
+                      <Input 
+                        id="booking-api" 
+                        value={mockProperty.apiKeys.booking} 
+                        onChange={() => {}}
                       />
                     </div>
-                    {apiToken && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Token conectado! Sua propriedade está sincronizada com Beds24.
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label>Status de Sincronização</Label>
-                    <div className="mt-2 p-4 bg-primary/5 rounded-md">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 rounded-full bg-frontdesk-green mr-2"></div>
-                        <span className="font-medium">Conectado</span>
-                        {apiToken && (
-                          <span className="ml-auto text-sm text-muted-foreground">
-                            Última sincronização: Hoje às 15:42
-                          </span>
-                        )}
-                      </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="airbnb-api">Airbnb API Key</Label>
+                      <Input 
+                        id="airbnb-api" 
+                        value={mockProperty.apiKeys.airbnb} 
+                        onChange={() => {}}
+                      />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-          
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate(`/propriedade/${mockProperty.slug}`)}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit">
-              Salvar Alterações
-            </Button>
-          </div>
-        </form>
-      </Form>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-lg font-medium mb-4">Integrações</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="bg-muted/30">
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-base">Integração com Google</CardTitle>
+                      </CardHeader>
+                      <CardFooter className="p-4 pt-0 flex justify-end">
+                        <Button>Conectar</Button>
+                      </CardFooter>
+                    </Card>
+                    
+                    <Card className="bg-muted/30">
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-base">Stripe (Pagamentos)</CardTitle>
+                      </CardHeader>
+                      <CardFooter className="p-4 pt-0 flex justify-end">
+                        <Button>Conectar</Button>
+                      </CardFooter>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* iCal */}
+        <TabsContent value="ical">
+          <PropertyICal propertyId={mockProperty.id} propertyName={mockProperty.name} />
+        </TabsContent>
+      </Tabs>
     </DashboardLayout>
   );
 };
 
-export default PropriedadeEditar;
+export default PropertyEdit;

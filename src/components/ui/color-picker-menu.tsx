@@ -24,7 +24,7 @@ export function ColorPickerMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="p-1 rounded-md hover:bg-accent">
+        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
           <Palette size={18} />
           <span className="sr-only">Alterar cores</span>
         </Button>

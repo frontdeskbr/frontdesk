@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { CalendarIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
@@ -26,9 +25,19 @@ export function DateRangePicker({
   className,
   align = "start",
 }: DateRangePickerProps) {
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+
+  const handleSelect = (range: DateRange | undefined) => {
+    onDateChange(range);
+    // Keep the calendar open until both dates are selected
+    if (range?.from && range?.to) {
+      setTimeout(() => setIsCalendarOpen(false), 300);
+    }
+  };
+
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover>
+      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
@@ -59,9 +68,10 @@ export function DateRangePicker({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={onDateChange}
+            onSelect={handleSelect}
             numberOfMonths={2}
             locale={ptBR}
+            className="p-3 pointer-events-auto"
           />
         </PopoverContent>
       </Popover>

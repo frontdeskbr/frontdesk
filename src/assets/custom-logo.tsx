@@ -16,9 +16,13 @@ export const CustomLogo: React.FC<LogoProps> = ({ className, size = 42 }) => (
   />
 );
 
-export const TextLogo: React.FC<LogoProps> = ({ className, size = 32 }) => (
+export const TextLogo: React.FC<LogoProps & { hideText?: boolean }> = ({ 
+  className, 
+  size = 32,
+  hideText = false
+}) => (
   <div className={`flex items-center gap-2 ${className}`}>
     <CustomLogo size={size} />
-    <span className="font-semibold text-xl">Frontdesk</span>
+    {!hideText && <span className="font-semibold text-xl">Frontdesk</span>}
   </div>
 );

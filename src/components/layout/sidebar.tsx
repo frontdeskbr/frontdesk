@@ -11,8 +11,7 @@ import {
   Settings,
   Menu,
   X,
-  ChevronRight,
-  Palette
+  ChevronRight
 } from "lucide-react";
 import { TextLogo } from "@/assets/custom-logo";
 import { cn } from "@/lib/utils";
@@ -127,15 +126,12 @@ export const Sidebar: React.FC = () => {
           )}
           
           {!isMobile && !isCollapsed && (
-            <div className="flex items-center gap-2">
-              <ColorPickerMenu />
-              <button 
-                onClick={toggleCollapse}
-                className="p-1 rounded-md hover:bg-accent text-foreground/70"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+            <button 
+              onClick={toggleCollapse}
+              className="p-1 rounded-md hover:bg-accent text-foreground/70"
+            >
+              <ChevronRight size={18} />
+            </button>
           )}
           
           {!isMobile && isCollapsed && (

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 type Theme = "light" | "dark";
 type PrimaryColor = "blue" | "purple" | "teal" | "green" | "amber";
 
-const DEFAULT_COLOR = "blue";
+const DEFAULT_COLOR = "purple"; // Changed default from blue to purple
 
 const COLOR_MAP = {
   blue: {
