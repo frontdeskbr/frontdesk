@@ -23,16 +23,25 @@ import Relatorios from "./pages/relatorios";
 import Calendario from "./pages/calendario";
 import PropriedadeDetalhe from "./pages/propriedade-detalhe";
 
-const queryClient = new QueryClient();
+// Create QueryClient with improved settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 30000
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <ThemeProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Navigate to="/login" replace />} />
@@ -54,10 +63,10 @@ const App = () => (
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </ThemeProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

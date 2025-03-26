@@ -1,22 +1,11 @@
 
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { Navigate } from "react-router-dom";
 
 const Index = () => {
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    // Redirect to login page
-    navigate("/login");
-  }, [navigate]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="animate-pulse-subtle">
-        <p className="text-muted-foreground">Redirecionando...</p>
-      </div>
-    </div>
-  );
+  // Use Navigate component directly instead of useEffect + useNavigate hook
+  // This provides immediate rendering without the intermediate blank state
+  return <Navigate to="/login" replace />;
 };
 
 export default Index;
