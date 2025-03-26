@@ -1,7 +1,6 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Toaster } from "sonner";
 import { Sidebar } from "./sidebar";
 import { UserButton } from "./user-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,7 +30,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           </motion.main>
         </ScrollArea>
       </div>
-      <Toaster position="top-right" richColors />
     </div>
   );
 };
