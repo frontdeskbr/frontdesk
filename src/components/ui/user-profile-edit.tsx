@@ -48,6 +48,17 @@ export function UserProfileEdit() {
     console.log(data);
   }
 
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!user?.name) return "U";
+    return user.name
+      .split(" ")
+      .map(part => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -61,7 +72,7 @@ export function UserProfileEdit() {
               <Avatar className="h-16 w-16">
                 <AvatarImage src={user?.avatar} />
                 <AvatarFallback className="bg-primary/10 text-primary">
-                  <User className="h-8 w-8" />
+                  {getUserInitials()}
                 </AvatarFallback>
               </Avatar>
               <div>

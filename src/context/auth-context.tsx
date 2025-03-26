@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,6 +7,10 @@ interface User {
   email: string;
   name: string;
   role: "admin" | "owner";
+  phone?: string;
+  company?: string;
+  position?: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -28,14 +31,20 @@ const MOCK_USERS = [
     email: "contato.frontdesk@gmail.com",
     password: "Mudar@01",
     name: "Admin Frontdesk",
-    role: "admin" as const
+    role: "admin" as const,
+    phone: "+55 11 99999-9999",
+    company: "Frontdesk",
+    position: "Administrador"
   },
   {
     id: "2",
     email: "usuario@frontdesk.com.br",
     password: "Mudar@01",
     name: "Proprietário Demo",
-    role: "owner" as const
+    role: "owner" as const,
+    phone: "+55 11 98888-8888",
+    company: "Demo Hotéis",
+    position: "Proprietário"
   }
 ];
 
