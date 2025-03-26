@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams, Link } from "react-router-dom";
-import { Edit, ArrowLeft, MapPin, Clock, Bed, Phone, Building2, Home, Image, Calendar, Info } from "lucide-react";
+import { Edit, ArrowLeft, MapPin, Clock, Bed, Phone, Building2, Home, Image, Calendar, Info, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { OTAIcon } from "@/components/ui/ota-icon";
 
 // Mock property data (would typically come from an API)
 const mockProperty = {
@@ -59,6 +60,7 @@ const mockProperty = {
   status: "active",
   checkIn: "14:00",
   checkOut: "12:00",
+  template: "light" // or "dark"
 };
 
 // Mock pricing rules data
@@ -95,6 +97,10 @@ const PropriedadeDetalhe: React.FC = () => {
     window.open(`https://wa.me/${property.whatsapp.replace(/\D/g, '')}`, '_blank');
   };
 
+  const openLandingPage = () => {
+    window.open(`/p/${property.slug}`, '_blank');
+  };
+
   return (
     <DashboardLayout>
       <div className="mb-6">
@@ -113,6 +119,12 @@ const PropriedadeDetalhe: React.FC = () => {
             <Phone size={16} />
             WhatsApp
           </Button>
+          
+          <Button onClick={openLandingPage} variant="outline" className="gap-1">
+            <ExternalLink size={16} />
+            Ver Site
+          </Button>
+          
           <Link to={`/propriedades/editar/${property.id}`}>
             <Button className="gap-1">
               <Edit size={16} />
@@ -226,7 +238,9 @@ const PropriedadeDetalhe: React.FC = () => {
                   <p className="text-sm text-muted-foreground text-center mb-3">
                     Adicione um novo quarto ou unidade a esta propriedade
                   </p>
-                  <Button variant="outline">Adicionar Quarto</Button>
+                  <Link to={`/propriedades/editar/${property.id}`}>
+                    <Button variant="outline">Adicionar Quarto</Button>
+                  </Link>
                 </Card>
               </div>
             </TabsContent>
@@ -365,6 +379,40 @@ const PropriedadeDetalhe: React.FC = () => {
                 
                 <Button variant="outline" className="w-full">
                   Sincronizar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <ExternalLink size={18} className="mr-2" />
+                Página Externa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">URL da Página</h3>
+                  <div className="flex items-center gap-2">
+                    <code className="px-2 py-1 bg-muted rounded text-sm flex-1 overflow-auto">
+                      /p/{property.slug}
+                    </code>
+                    <Button variant="ghost" size="icon">
+                      <ExternalLink size={16} />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Template</h3>
+                  <p className="capitalize">{property.template || "Padrão"}</p>
+                </div>
+                
+                <Button onClick={openLandingPage} className="w-full">
+                  <ExternalLink size={16} className="mr-2" />
+                  Visualizar Página
                 </Button>
               </div>
             </CardContent>

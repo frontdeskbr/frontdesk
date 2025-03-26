@@ -11,12 +11,14 @@ import {
   Settings,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Palette
 } from "lucide-react";
-import { TextLogo } from "@/assets/logo";
+import { TextLogo } from "@/assets/custom-logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ColorPickerMenu } from "../ui/color-picker-menu";
 
 interface SidebarLinkProps {
   to: string;
@@ -125,11 +127,23 @@ export const Sidebar: React.FC = () => {
           )}
           
           {!isMobile && !isCollapsed && (
+            <div className="flex items-center gap-2">
+              <ColorPickerMenu />
+              <button 
+                onClick={toggleCollapse}
+                className="p-1 rounded-md hover:bg-accent text-foreground/70"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
+          
+          {!isMobile && isCollapsed && (
             <button 
               onClick={toggleCollapse}
-              className="p-1 rounded-md hover:bg-accent text-foreground/70"
+              className="absolute top-20 -right-3 p-1 bg-background border rounded-full shadow hover:bg-accent text-foreground/70"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={16} className="rotate-180" />
             </button>
           )}
         </div>

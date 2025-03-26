@@ -22,6 +22,8 @@ import Reservas from "./pages/reservas";
 import Relatorios from "./pages/relatorios";
 import Calendario from "./pages/calendario";
 import PropriedadeDetalhe from "./pages/propriedade-detalhe";
+import PropriedadeEditar from "./pages/propriedade-editar";
+import PropertyLanding from "./pages/propriedade-landing";
 
 // Create QueryClient with improved settings
 const queryClient = new QueryClient({
@@ -54,11 +56,15 @@ const App = () => (
                 <Route path="/usuarios" element={<Usuarios />} />
                 <Route path="/propriedades" element={<Propriedades />} />
                 <Route path="/propriedade/:slug" element={<PropriedadeDetalhe />} />
+                <Route path="/propriedades/editar/:id" element={<PropriedadeEditar />} />
                 <Route path="/reservas" element={<Reservas />} />
                 <Route path="/relatorios" element={<Relatorios />} />
                 <Route path="/calendario" element={<Calendario />} />
                 <Route path="/configuracoes" element={<Configuracoes />} />
               </Route>
+              
+              {/* Public property landing page */}
+              <Route path="/p/:slug" element={<PropertyLanding />} />
               
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
