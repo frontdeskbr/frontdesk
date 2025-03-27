@@ -58,7 +58,8 @@ const channelData = [
   { name: "Expedia", value: 5 },
 ];
 
-const COLORS = ["#0088FE", "#FF8042", "#00C49F", "#FFBB28"];
+// Updated colors to light blue theme
+const COLORS = ["#1EAEDB", "#33C3F0", "#0FA0CE", "#7FDBFF"];
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -69,9 +70,10 @@ const Dashboard: React.FC = () => {
       <PageHeader 
         title={`Olá, ${user?.name.split(" ")[0]}`}
         description="Bem-vindo ao seu painel de controle"
+        className="mb-8" // Increased spacing after header
       />
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total de Propriedades"
           value={isAdmin ? "28" : "2"}
@@ -115,8 +117,8 @@ const Dashboard: React.FC = () => {
         )}
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 mt-8">
-        <Card>
+      <div className="grid gap-6 md:grid-cols-2 mt-10">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Ocupação Mensal</CardTitle>
             <CardDescription>Taxa de ocupação nos últimos 12 meses</CardDescription>
@@ -130,8 +132,8 @@ const Dashboard: React.FC = () => {
                 >
                   <defs>
                     <linearGradient id="occupancyGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0080FF" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#0080FF" stopOpacity={0.1} />
+                      <stop offset="5%" stopColor="#1EAEDB" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#1EAEDB" stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
@@ -148,7 +150,7 @@ const Dashboard: React.FC = () => {
                   <Area 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#0080FF" 
+                    stroke="#1EAEDB" 
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#occupancyGradient)" 
@@ -159,7 +161,7 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Distribuição de Canais</CardTitle>
             <CardDescription>Reservas por canal de distribuição</CardDescription>
@@ -197,7 +199,7 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
       
-      <div className="mt-8">
+      <div className="mt-10">
         <Tabs defaultValue="revenue">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold">Análise Financeira</h3>
@@ -207,7 +209,7 @@ const Dashboard: React.FC = () => {
             </TabsList>
           </div>
           
-          <Card>
+          <Card className="shadow-sm">
             <TabsContent value="revenue" className="m-0">
               <CardHeader>
                 <CardTitle>Receita por Canal</CardTitle>
@@ -229,9 +231,9 @@ const Dashboard: React.FC = () => {
                         formatter={(value) => [`R$ ${value}`, '']}
                       />
                       <Legend />
-                      <Bar dataKey="bookingcom" name="Booking.com" fill="#0088FE" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="airbnb" name="Airbnb" fill="#FF8042" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="direct" name="Direto" fill="#00C49F" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="bookingcom" name="Booking.com" fill="#1EAEDB" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="airbnb" name="Airbnb" fill="#33C3F0" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="direct" name="Direto" fill="#0FA0CE" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -268,10 +270,10 @@ const Dashboard: React.FC = () => {
                       <Line
                         type="monotone"
                         dataKey="rate"
-                        stroke="#0080FF"
+                        stroke="#1EAEDB"
                         strokeWidth={3}
-                        dot={{ fill: '#0080FF', strokeWidth: 2, r: 6 }}
-                        activeDot={{ fill: '#0080FF', strokeWidth: 2, r: 8 }}
+                        dot={{ fill: '#1EAEDB', strokeWidth: 2, r: 6 }}
+                        activeDot={{ fill: '#1EAEDB', strokeWidth: 2, r: 8 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -282,11 +284,11 @@ const Dashboard: React.FC = () => {
         </Tabs>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-8">
-        <Card>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center text-lg">
-              <TrendingUp className="h-5 w-5 mr-2 text-frontdesk-green" />
+              <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
               Maior Ocupação
             </CardTitle>
           </CardHeader>
@@ -294,37 +296,37 @@ const Dashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mr-3">
-                    <Building2 className="h-6 w-6 text-primary" />
+                  <div className="w-12 h-12 rounded-md bg-blue-50 flex items-center justify-center mr-3">
+                    <Building2 className="h-6 w-6 text-blue-500" />
                   </div>
                   <div>
                     <h4 className="font-medium">Vila Mariana Suites</h4>
                     <p className="text-sm text-muted-foreground">São Paulo, SP</p>
                   </div>
                 </div>
-                <div className="text-xl font-bold text-frontdesk-green">98%</div>
+                <div className="text-xl font-bold text-green-500">98%</div>
               </div>
               
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mr-3">
-                    <Building2 className="h-6 w-6 text-primary" />
+                  <div className="w-12 h-12 rounded-md bg-blue-50 flex items-center justify-center mr-3">
+                    <Building2 className="h-6 w-6 text-blue-500" />
                   </div>
                   <div>
                     <h4 className="font-medium">Copacabana Ocean View</h4>
                     <p className="text-sm text-muted-foreground">Rio de Janeiro, RJ</p>
                   </div>
                 </div>
-                <div className="text-xl font-bold text-frontdesk-green">95%</div>
+                <div className="text-xl font-bold text-green-500">95%</div>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center text-lg">
-              <CalendarClock className="h-5 w-5 mr-2 text-primary" />
+              <CalendarClock className="h-5 w-5 mr-2 text-blue-500" />
               Próximos Check-ins
             </CardTitle>
           </CardHeader>
@@ -375,10 +377,10 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center text-lg">
-              <MapPin className="h-5 w-5 mr-2 text-primary" />
+              <MapPin className="h-5 w-5 mr-2 text-blue-500" />
               Distribuição Geográfica
             </CardTitle>
           </CardHeader>
@@ -390,7 +392,7 @@ const Dashboard: React.FC = () => {
                   <span className="text-sm text-muted-foreground">45%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary rounded-full h-2" style={{ width: "45%" }}></div>
+                  <div className="bg-blue-500 rounded-full h-2" style={{ width: "45%" }}></div>
                 </div>
               </div>
               
@@ -400,7 +402,7 @@ const Dashboard: React.FC = () => {
                   <span className="text-sm text-muted-foreground">30%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary rounded-full h-2" style={{ width: "30%" }}></div>
+                  <div className="bg-blue-500 rounded-full h-2" style={{ width: "30%" }}></div>
                 </div>
               </div>
               
@@ -410,7 +412,7 @@ const Dashboard: React.FC = () => {
                   <span className="text-sm text-muted-foreground">15%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary rounded-full h-2" style={{ width: "15%" }}></div>
+                  <div className="bg-blue-500 rounded-full h-2" style={{ width: "15%" }}></div>
                 </div>
               </div>
               
@@ -420,7 +422,7 @@ const Dashboard: React.FC = () => {
                   <span className="text-sm text-muted-foreground">10%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary rounded-full h-2" style={{ width: "10%" }}></div>
+                  <div className="bg-blue-500 rounded-full h-2" style={{ width: "10%" }}></div>
                 </div>
               </div>
             </div>

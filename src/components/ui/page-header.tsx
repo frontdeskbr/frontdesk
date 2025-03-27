@@ -13,19 +13,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
   children,
-  className,
+  className
 }) => {
   return (
-    <div className={cn("flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between", className)}>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
+    <div className={cn("flex flex-col justify-between gap-4 pb-6 md:flex-row md:items-center", className)}>
+      <div className="space-y-2"> {/* Increased spacing */}
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
+        {description && <p className="text-muted-foreground">{description}</p>}
       </div>
-      {children && (
-        <div className="flex items-center space-x-2">{children}</div>
-      )}
+      {children && <div className="flex items-center gap-2">{children}</div>}
     </div>
   );
 };
