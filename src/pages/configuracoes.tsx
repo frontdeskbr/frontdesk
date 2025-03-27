@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,19 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
-import { Beds24Token } from "@/services/beds24Api";
+import { Clock, AlertTriangle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, Clock, Loader2 } from "lucide-react";
 
 const Configuracoes: React.FC = () => {
   const { theme, toggleTheme, primaryColor, setPrimaryColor } = useTheme();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  
-  const [selectedToken, setSelectedToken] = useState<Beds24Token | null>(null);
+
+  const [selectedToken, setSelectedToken] = useState<any | null>(null);
   const [isLoadingToken, setIsLoadingToken] = useState(true);
-  
-  // Load token from database
+
   useEffect(() => {
     const loadToken = async () => {
       try {
@@ -33,14 +30,14 @@ const Configuracoes: React.FC = () => {
           .order("created_at", { ascending: false })
           .limit(1)
           .single();
-          
+
         if (error) {
           if (error.code !== 'PGRST116') { // Not found error
             console.error("Erro ao carregar token:", error);
             toast.error("Erro ao carregar configurações da API. Tente novamente.");
           }
         } else {
-          setSelectedToken(data as Beds24Token);
+          setSelectedToken(data);
         }
       } catch (error) {
         console.error("Erro ao carregar token:", error);
@@ -48,20 +45,20 @@ const Configuracoes: React.FC = () => {
         setIsLoadingToken(false);
       }
     };
-    
+
     loadToken();
   }, []);
-  
-  const handleTokenChange = (token: Beds24Token) => {
+
+  const handleTokenChange = (token: any) => {
     setSelectedToken(token);
     toast.success("Token da API Beds24 salvo com sucesso!");
   };
-  
+
   const tokenIsExpired = selectedToken && new Date(selectedToken.expires_at) < new Date();
-  const tokenExpiresIn = selectedToken 
+  const tokenExpiresIn = selectedToken
     ? Math.max(0, Math.floor((new Date(selectedToken.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60)))
     : 0;
-  
+
   const colorOptions = [
     { value: "blue", label: "Azul", color: "#0080FF" },
     { value: "purple", label: "Roxo", color: "#8B5CF6" },
@@ -72,11 +69,11 @@ const Configuracoes: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <PageHeader 
+      <PageHeader
         title="Configurações"
         description="Gerencie as configurações da sua conta e do sistema"
       />
-      
+
       <div className="px-10 py-6">
         <Tabs defaultValue="api">
           <TabsList className="mb-6">
@@ -85,7 +82,7 @@ const Configuracoes: React.FC = () => {
             <TabsTrigger value="aparencia">Aparência</TabsTrigger>
             {isAdmin && <TabsTrigger value="sistema">Sistema</TabsTrigger>}
           </TabsList>
-          
+
           <TabsContent value="conta">
             <div className="grid gap-6">
               <Card>
@@ -100,24 +97,24 @@ const Configuracoes: React.FC = () => {
                     <Label>Nome</Label>
                     <div className="font-medium">{user?.name}</div>
                   </div>
-                  
+
                   <div className="grid gap-3">
                     <Label>Email</Label>
                     <div className="font-medium">{user?.email}</div>
                   </div>
-                  
+
                   <div className="grid gap-3">
                     <Label>Tipo de Conta</Label>
                     <div className="font-medium">{isAdmin ? "Administrador" : "Proprietário"}</div>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Button variant="outline">Alterar Senha</Button>
                     <Button variant="outline">Atualizar Informações</Button>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Notificações</CardTitle>
@@ -135,7 +132,7 @@ const Configuracoes: React.FC = () => {
                     </div>
                     <Switch id="notify-checkin" defaultChecked />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="notify-booking">Novas Reservas</Label>
@@ -145,7 +142,7 @@ const Configuracoes: React.FC = () => {
                     </div>
                     <Switch id="notify-booking" defaultChecked />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="notify-email">Notificações por Email</Label>
@@ -159,7 +156,7 @@ const Configuracoes: React.FC = () => {
               </Card>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="api">
             <Card>
               <CardHeader>
@@ -186,7 +183,7 @@ const Configuracoes: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {selectedToken && !tokenIsExpired && (
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30 text-sm flex items-start gap-2">
                         <Clock className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
@@ -198,20 +195,20 @@ const Configuracoes: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     <div>
                       <Label className="mb-2 block">Access Token</Label>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex-1">
                           <div className="p-2 border rounded-md bg-muted/50 text-sm font-mono break-all">
-                            {selectedToken?.token ? 
-                              selectedToken.token.substring(0, 8) + "..." + selectedToken.token.substring(selectedToken.token.length - 8) : 
+                            {selectedToken?.token ?
+                              selectedToken.token.substring(0, 8) + "..." + selectedToken.token.substring(selectedToken.token.length - 8) :
                               "Nenhum token configurado"
                             }
                           </div>
                         </div>
-                        <ApiTokenInput 
-                          onSave={handleTokenChange} 
+                        <ApiTokenInput
+                          onSave={handleTokenChange}
                           savedToken={selectedToken}
                         />
                       </div>
@@ -219,13 +216,13 @@ const Configuracoes: React.FC = () => {
                         O Access Token é usado para autenticar suas requisições à API Beds24 v2.
                       </p>
                     </div>
-                    
+
                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
                       <h4 className="font-medium mb-2">Documentação da API</h4>
                       <p className="text-sm text-muted-foreground mb-3">
                         Consulte a documentação oficial da API Beds24 v2 para mais informações sobre os endpoints disponíveis e parâmetros.
                       </p>
-                      <a 
+                      <a
                         href="https://beds24.com/api/v2/"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -234,7 +231,7 @@ const Configuracoes: React.FC = () => {
                         https://beds24.com/api/v2/
                       </a>
                     </div>
-                    
+
                     <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/30 text-sm">
                       <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">Importante</h4>
                       <p className="text-yellow-700 dark:text-yellow-300/80">
@@ -247,7 +244,7 @@ const Configuracoes: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="aparencia">
             <Card>
               <CardHeader>
@@ -261,8 +258,8 @@ const Configuracoes: React.FC = () => {
                   <Label>Tema</Label>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <Switch 
-                        id="theme-switch" 
+                      <Switch
+                        id="theme-switch"
                         checked={theme === "dark"}
                         onCheckedChange={toggleTheme}
                       />
@@ -272,7 +269,7 @@ const Configuracoes: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <Label>Cor Principal</Label>
                   <div className="flex flex-wrap gap-3">
@@ -306,7 +303,7 @@ const Configuracoes: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col gap-3">
                   <Label>Visualização</Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -335,7 +332,7 @@ const Configuracoes: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {isAdmin && (
             <TabsContent value="sistema">
               <Card>
@@ -358,7 +355,7 @@ const Configuracoes: React.FC = () => {
                         </div>
                         <Switch defaultChecked id="allow-registration" />
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <p className="font-medium">Modo de Manutenção</p>
@@ -370,7 +367,7 @@ const Configuracoes: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Limites do Sistema</Label>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -384,7 +381,7 @@ const Configuracoes: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="pt-4 flex flex-col sm:flex-row gap-4">
                     <Button variant="default">Salvar Configurações</Button>
                     <Button variant="outline">Restaurar Padrões</Button>
