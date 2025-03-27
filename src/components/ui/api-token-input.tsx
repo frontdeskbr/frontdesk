@@ -11,7 +11,7 @@ export const ApiTokenInput: React.FC<ApiTokenInputProps> = ({
   buttonText = "API Beds24 Conectada"
 }) => {
   const handleButtonClick = () => {
-    toast.info("A conexão com a API Beds24 já está configurada no backend");
+    toast.info("A conexão com a API Beds24 está configurada no servidor proxy");
   };
 
   return (

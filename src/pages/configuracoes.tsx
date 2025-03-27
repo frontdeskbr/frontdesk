@@ -162,85 +162,56 @@ const Configuracoes: React.FC = () => {
               <CardHeader>
                 <CardTitle>Configurações da API Beds24</CardTitle>
                 <CardDescription>
-                  Configure sua conexão com a API Beds24 v2
+                  Conexão com a API Beds24 v2 via servidor proxy
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {isLoadingToken ? (
-                  <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30 text-sm flex items-start gap-2">
+                  <div>
+                    <h4 className="font-medium text-green-800 dark:text-green-300 mb-1">API Configurada</h4>
+                    <p className="text-green-700 dark:text-green-300/80">
+                      A conexão com a API Beds24 está configurada via servidor proxy.
+                    </p>
                   </div>
-                ) : (
-                  <>
-                    {tokenIsExpired && (
-                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/30 text-sm flex items-start gap-2">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">Token API Expirado</h4>
-                          <p className="text-yellow-700 dark:text-yellow-300/80">
-                            Seu token da API Beds24 expirou. Por favor, gere um novo token no painel da Beds24 e atualize aqui.
-                          </p>
-                        </div>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block">Status da Conexão</Label>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1">
+                      <div className="p-2 border rounded-md bg-muted/50 text-sm font-mono break-all">
+                        Conexão gerenciada no servidor: https://ogame.com.br/prox/prox.php
                       </div>
-                    )}
-
-                    {selectedToken && !tokenIsExpired && (
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30 text-sm flex items-start gap-2">
-                        <Clock className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="font-medium text-green-800 dark:text-green-300 mb-1">Token API Ativo</h4>
-                          <p className="text-green-700 dark:text-green-300/80">
-                            Seu token está ativo e expira em aproximadamente {tokenExpiresIn} horas.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <Label className="mb-2 block">Access Token</Label>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div className="flex-1">
-                          <div className="p-2 border rounded-md bg-muted/50 text-sm font-mono break-all">
-                            {selectedToken?.token ?
-                              selectedToken.token.substring(0, 8) + "..." + selectedToken.token.substring(selectedToken.token.length - 8) :
-                              "Nenhum token configurado"
-                            }
-                          </div>
-                        </div>
-                        <ApiTokenInput
-                          onSave={handleTokenChange}
-                          savedToken={selectedToken}
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        O Access Token é usado para autenticar suas requisições à API Beds24 v2.
-                      </p>
                     </div>
+                    <ApiTokenInput />
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Todas as requisições à API Beds24 são feitas através do servidor proxy.
+                  </p>
+                </div>
 
-                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
-                      <h4 className="font-medium mb-2">Documentação da API</h4>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Consulte a documentação oficial da API Beds24 v2 para mais informações sobre os endpoints disponíveis e parâmetros.
-                      </p>
-                      <a
-                        href="https://beds24.com/api/v2/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline"
-                      >
-                        https://beds24.com/api/v2/
-                      </a>
-                    </div>
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
+                  <h4 className="font-medium mb-2">Documentação da API</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Consulte a documentação oficial da API Beds24 v2 para mais informações sobre os endpoints disponíveis e parâmetros.
+                  </p>
+                  <a
+                    href="https://beds24.com/api/v2/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    https://beds24.com/api/v2/
+                  </a>
+                </div>
 
-                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/30 text-sm">
-                      <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">Importante</h4>
-                      <p className="text-yellow-700 dark:text-yellow-300/80">
-                        Para garantir a segurança, use apenas Access Tokens temporários e não LongLife Tokens.
-                        A autenticação é feita via header <code className="text-xs p-1 bg-yellow-100 dark:bg-yellow-900/40 rounded">token: ACCESS_TOKEN</code>.
-                      </p>
-                    </div>
-                  </>
-                )}
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/30 text-sm">
+                  <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">Informação</h4>
+                  <p className="text-yellow-700 dark:text-yellow-300/80">
+                    A autenticação é gerenciada automaticamente pelo servidor proxy.
+                    Não é necessário gerenciar tokens no frontend.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
