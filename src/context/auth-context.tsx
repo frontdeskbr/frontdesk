@@ -1,6 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface User {
   id: string;
@@ -24,12 +26,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for template
+// Mock users for template - these will be replaced by actual authentication
 const MOCK_USERS = [
   {
     id: "1",
     email: "contato.frontdesk@gmail.com",
-    password: "Mudar@01",
+    password: "Acesso@01", // Updated as requested
     name: "Admin Frontdesk",
     role: "admin" as const,
     phone: "+55 11 99999-9999",
@@ -39,7 +41,7 @@ const MOCK_USERS = [
   {
     id: "2",
     email: "usuario@frontdesk.com.br",
-    password: "Mudar@01",
+    password: "Acesso@01", // Updated as requested
     name: "Proprietário Demo",
     role: "owner" as const,
     phone: "+55 11 98888-8888",

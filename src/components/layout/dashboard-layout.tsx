@@ -26,7 +26,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         </header>
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <motion.main
-            className="flex-1 px-10 py-8"
+            className="flex-1"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
