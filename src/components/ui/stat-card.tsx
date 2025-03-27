@@ -2,6 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatCardProps {
   title: string;
@@ -13,6 +14,7 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
+  isLoading?: boolean; // Added isLoading prop
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -22,6 +24,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   description,
   className,
   trend,
+  isLoading = false, // Default to false
 }) => {
   return (
     <Card className={cn("overflow-hidden transition-all hover-card", className)}>
@@ -36,24 +39,33 @@ export const StatCard: React.FC<StatCardProps> = ({
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {(description || trend) && (
-          <div className="flex items-center mt-1">
-            {trend && (
-              <span
-                className={cn(
-                  "mr-2 text-xs font-medium",
-                  trend.isPositive ? "text-frontdesk-green" : "text-frontdesk-red"
+        {isLoading ? (
+          <>
+            <Skeleton className="h-8 w-24 mb-2" />
+            {(description || trend) && <Skeleton className="h-4 w-32" />}
+          </>
+        ) : (
+          <>
+            <div className="text-2xl font-bold">{value}</div>
+            {(description || trend) && (
+              <div className="flex items-center mt-1">
+                {trend && (
+                  <span
+                    className={cn(
+                      "mr-2 text-xs font-medium",
+                      trend.isPositive ? "text-frontdesk-green" : "text-frontdesk-red"
+                    )}
+                  >
+                    {trend.isPositive ? "+" : "-"}
+                    {Math.abs(trend.value)}%
+                  </span>
                 )}
-              >
-                {trend.isPositive ? "+" : "-"}
-                {Math.abs(trend.value)}%
-              </span>
+                {description && (
+                  <p className="text-xs text-muted-foreground">{description}</p>
+                )}
+              </div>
             )}
-            {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
-            )}
-          </div>
+          </>
         )}
       </CardContent>
     </Card>
