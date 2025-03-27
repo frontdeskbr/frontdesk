@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
-import { Logo } from "@/assets/logo";
+import { TextLogo } from "@/assets/logo"; // Changed from Logo to TextLogo
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -51,7 +51,7 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Logo className="mx-auto h-12 w-auto" />
+          <TextLogo className="mx-auto h-12 w-auto" /> {/* Changed from Logo to TextLogo */}
           <h2 className="mt-4 text-2xl font-bold text-primary">
             Frontdesk
           </h2>
