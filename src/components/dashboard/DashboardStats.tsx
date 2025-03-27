@@ -90,7 +90,7 @@ export const DashboardStats: React.FC = () => {
         <StatCard
           title="Total de Usuários"
           value={usersLoading ? "..." : usersCount?.toString() || "0"}
-          icon={<Users className="h-5 w-5" />} {/* Changed from UserRound to Users */}
+          icon={<Users className="h-5 w-5" />}
           description="Usuários ativos"
           isLoading={usersLoading}
         />
