@@ -2,14 +2,6 @@
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
-
-export interface Beds24Token {
-  id?: string;
-  token: string;
-  expires_at: string;
-  created_at?: string;
-}
 
 export interface Beds24Property {
   propId: string;
@@ -93,31 +85,6 @@ export const beds24Request = async <T>(
     return await response.json();
   } catch (error: any) {
     console.error("Erro na requisição Beds24:", error);
-    throw error;
-  }
-};
-
-/**
- * Save Beds24 API token to Supabase
- */
-export const saveBeds24Token = async (tokenData: Partial<Beds24Token>): Promise<Beds24Token> => {
-  try {
-    const { data, error } = await supabase
-      .from("beds24_tokens")
-      .insert({
-        token: tokenData.token,
-        expires_at: tokenData.expires_at
-      })
-      .select()
-      .single();
-      
-    if (error) {
-      throw new Error(`Erro ao salvar token: ${error.message}`);
-    }
-    
-    return data as Beds24Token;
-  } catch (error: any) {
-    console.error("Erro ao salvar token:", error);
     throw error;
   }
 };
