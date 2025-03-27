@@ -61,7 +61,6 @@ export const ApiTokenInput: React.FC<ApiTokenInputProps> = ({
       }
       
       setIsOpen(false);
-      toast.success("Token Beds24 salvo com sucesso!");
     } catch (error) {
       console.error("Erro ao salvar token:", error);
       toast.error("Erro ao salvar token. Tente novamente.");

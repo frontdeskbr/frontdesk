@@ -1,113 +1,102 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { getBookings } from "@/services/beds24Api";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import { format, subMonths } from "date-fns";
+import { getBookingChannels } from "@/services/beds24Api";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const ChannelsChart: React.FC = () => {
-  const currentDate = new Date();
-  
-  // Get bookings for the last 6 months
-  const { data: bookings, isLoading } = useQuery({
-    queryKey: ['bookingsChannels'],
-    queryFn: async () => {
-      const startDate = format(subMonths(currentDate, 6), 'yyyy-MM-dd');
-      const endDate = format(currentDate, 'yyyy-MM-dd');
-      return getBookings({ 
-        startDate,
-        endDate,
-        status: 'confirmed'
-      });
-    },
+export const ChannelsChart = () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ['bookingChannels'],
+    queryFn: getBookingChannels,
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
-  
-  // Calculate channel distribution
-  const channelData = React.useMemo(() => {
-    if (!bookings || bookings.length === 0) {
-      return [];
+
+  // Define colors for each channel
+  const COLORS = [
+    "var(--primary)",
+    "#F97315", // Airbnb orange
+    "#E53E3E", // Red
+    "#10B981", // Green
+    "#8B5CF6", // Purple
+    "#3B82F6", // Blue
+    "#EC4899", // Pink
+    "#F59E0B", // Amber
+    "#6366F1", // Indigo
+  ];
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="custom-tooltip bg-background border border-border p-3 rounded-md shadow-md">
+          <p className="font-medium">{`${payload[0].name}`}</p>
+          <p className="text-primary">{`${payload[0].value} reservas (${Math.round(payload[0].percent * 100)}%)`}</p>
+        </div>
+      );
     }
-    
-    const channels: Record<string, number> = {};
-    
-    bookings.forEach(booking => {
-      const source = booking.source || 'Direto';
-      channels[source] = (channels[source] || 0) + 1;
-    });
-    
-    // Convert to array format for the chart
-    const result = Object.entries(channels).map(([name, value]) => ({
-      name,
-      value: Math.round((value / bookings.length) * 100)
-    }));
-    
-    // Sort by value descending
-    return result.sort((a, b) => b.value - a.value);
-  }, [bookings]);
-  
-  // Updated colors to light blue theme
-  const COLORS = ["#1EAEDB", "#33C3F0", "#0FA0CE", "#7FDBFF", "#A7DBF2"];
-  
-  if (isLoading) {
+    return null;
+  };
+
+  const renderLegend = (props: any) => {
+    const { payload } = props;
+
     return (
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Distribuição de Canais</CardTitle>
-          <CardDescription>Reservas por canal de distribuição</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] flex items-center justify-center">
-            <p>Carregando dados...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <ul className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
+        {payload.map((entry: any, index: number) => (
+          <li key={`item-${index}`} className="flex items-center">
+            <div 
+              className="w-3 h-3 mr-1 rounded-sm" 
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-muted-foreground">{entry.value}</span>
+          </li>
+        ))}
+      </ul>
     );
-  }
-  
+  };
+
   return (
-    <Card className="shadow-sm">
-      <CardHeader>
-        <CardTitle>Distribuição de Canais</CardTitle>
-        <CardDescription>Reservas por canal de distribuição</CardDescription>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle>Canais de Reserva</CardTitle>
+        <CardDescription>
+          Distribuição de reservas por canal
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-[200px] w-full" />
+          </div>
+        ) : data && data.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
-                data={channelData}
+                data={data}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
+                outerRadius={80}
+                dataKey="count"
+                nameKey="channel"
               >
-                {channelData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {data.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={COLORS[index % COLORS.length]} 
+                  />
                 ))}
               </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  borderRadius: '8px', 
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }} 
-                formatter={(value) => [`${value}%`, 'Porcentagem']}
-              />
-              <Legend />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend content={renderLegend} />
             </PieChart>
           </ResponsiveContainer>
-        </div>
+        ) : (
+          <div className="h-[200px] flex items-center justify-center">
+            <p className="text-muted-foreground">Nenhum dado disponível</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
