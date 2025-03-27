@@ -16,8 +16,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className
 }) => {
   return (
-    <div className={cn("flex flex-col justify-between gap-4 pb-6 md:flex-row md:items-center", className)}>
-      <div className="space-y-2"> {/* Increased spacing */}
+    <div className={cn("flex flex-col justify-between gap-6 pb-8 md:flex-row md:items-center", className)}>
+      <div className="space-y-3"> {/* Increased spacing */}
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
         {description && <p className="text-muted-foreground">{description}</p>}
       </div>

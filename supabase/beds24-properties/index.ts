@@ -39,7 +39,7 @@ serve(async (req) => {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
         
       if (tokenError || !tokenRecord) {
         return new Response(

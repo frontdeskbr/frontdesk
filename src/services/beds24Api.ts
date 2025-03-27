@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -50,9 +51,13 @@ export const getBeds24Token = async (): Promise<string> => {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) {
+      throw new Error("Token não encontrado. Por favor, configure na página de Configurações.");
+    }
+
+    if (!tokenData) {
       throw new Error("Token não encontrado. Por favor, configure na página de Configurações.");
     }
 
@@ -87,19 +92,51 @@ export const saveBeds24Token = async (tokenData: Partial<Beds24Token>): Promise<
     tokenCache = null;
     tokenCacheExpiry = null;
 
-    const { data, error } = await supabase
+    // Get user ID from auth context
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Usuário não autenticado");
+    
+    // Check if token already exists for this user
+    const { data: existingToken } = await supabase
       .from("beds24_tokens")
-      .insert({
-        token: tokenData.token,
-        expires_at: tokenData.expires_at,
-      })
-      .select()
-      .single();
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (error) throw error;
+    let result;
+    
+    if (existingToken) {
+      // Update existing token
+      const { data, error } = await supabase
+        .from("beds24_tokens")
+        .update({
+          token: tokenData.token,
+          expires_at: tokenData.expires_at,
+        })
+        .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    } else {
+      // Insert new token
+      const { data, error } = await supabase
+        .from("beds24_tokens")
+        .insert({
+          token: tokenData.token,
+          expires_at: tokenData.expires_at,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    }
     
     toast.success("Token Beds24 salvo com sucesso!");
-    return data as Beds24Token;
+    return result as Beds24Token;
   } catch (error) {
     console.error("Erro ao salvar token Beds24:", error);
     toast.error("Erro ao salvar token. Tente novamente.");
@@ -178,6 +215,7 @@ export const getBookings = async (params: {
   propertyId?: string; 
   startDate?: string; 
   endDate?: string; 
+  status?: string;
 } = {}): Promise<any[]> => {
   try {
     let queryParams = new URLSearchParams();
@@ -185,6 +223,7 @@ export const getBookings = async (params: {
     if (params.propertyId) queryParams.append("propId", params.propertyId);
     if (params.startDate) queryParams.append("startDate", params.startDate);
     if (params.endDate) queryParams.append("endDate", params.endDate);
+    if (params.status) queryParams.append("status", params.status);
     
     const endpoint = `/bookings?${queryParams.toString()}`;
     return beds24Request<any[]>(endpoint);
@@ -217,6 +256,60 @@ export const getAvailability = async (params: {
   } catch (error) {
     console.error("Erro ao buscar disponibilidade:", error);
     toast.error("Erro ao carregar disponibilidade. Verifique sua conexão com a API Beds24.");
+    throw error;
+  }
+};
+
+/**
+ * Calculate total monthly revenue from bookings
+ */
+export const calculateMonthlyRevenue = async (month: number, year: number): Promise<number> => {
+  try {
+    // Get first and last day of the month
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0];
+    };
+    
+    // Get bookings for the month
+    const bookings = await getBookings({
+      startDate: formatDate(firstDay),
+      endDate: formatDate(lastDay),
+      status: 'confirmed'
+    });
+    
+    // Calculate total revenue
+    let totalRevenue = 0;
+    
+    for (const booking of bookings) {
+      if (booking.totalCost) {
+        totalRevenue += parseFloat(booking.totalCost);
+      }
+    }
+    
+    return totalRevenue;
+  } catch (error) {
+    console.error("Erro ao calcular receita mensal:", error);
+    throw error;
+  }
+};
+
+/**
+ * Gets active users count from Supabase
+ */
+export const getActiveUsersCount = async (): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from("beds24_tokens")
+      .select("*", { count: "exact", head: true });
+    
+    if (error) throw error;
+    
+    return count || 0;
+  } catch (error) {
+    console.error("Erro ao buscar contagem de usuários:", error);
     throw error;
   }
 };
