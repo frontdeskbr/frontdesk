@@ -8,7 +8,9 @@ serve(async (req) => {
   );
 
   const authHeader = req.headers.get("authorization");
-  if (!authHeader) return new Response(JSON.stringify({ error: "Token ausente" }), { status: 401 });
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Token ausente" }), { status: 401 });
+  }
 
   const token = authHeader.replace("Bearer ", "");
 
@@ -28,32 +30,16 @@ serve(async (req) => {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     }
   );
 
-  if (!bedsResponse.ok) {
-    const err = await bedsResponse.json();
-    return new Response(JSON.stringify({ error: "Erro na API Beds24", details: err }), { status: 500 });
-  }
-
-  const bedsData = await bedsResponse.json();
-  const result = (bedsData.data || []).map((property: any) => ({
-    id: property.id,
-    name: property.name,
-    city: property.city,
-    country: property.country,
-    picture: property?.pictures?.[0]?.url || null,
-    roomTypes: (property.roomTypes || []).map((room: any) => ({
-      id: room.id,
-      name: room.name,
-      minPrice: room.minPrice
-    }))
-  }));
+  const result = await bedsResponse.json();
 
   return new Response(JSON.stringify(result), {
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   });
 });
 
+Atualiza função beds24-properties
