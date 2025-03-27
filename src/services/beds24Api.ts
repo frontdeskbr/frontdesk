@@ -1,15 +1,7 @@
-import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-export interface Beds24Token {
-  token: string;
-  expires_at: string;
-  id?: string;
-  user_id?: string;
-  created_at?: string;
-}
 
 export interface Beds24Property {
   propId: string;
@@ -61,121 +53,11 @@ export interface Beds24User {
   properties?: string[];
 }
 
-// Cache mechanism to avoid requesting the token too often
-let tokenCache: Beds24Token | null = null;
-let tokenCacheExpiry: Date | null = null;
+// Base URL for the PHP proxy
+const PROXY_BASE_URL = "https://ogame.com.br/prox/prox.php";
 
 /**
- * Gets a valid Beds24 API token
- */
-export const getBeds24Token = async (): Promise<string> => {
-  try {
-    // Return cached token if it's still valid (with 5 min buffer)
-    if (tokenCache && tokenCacheExpiry && tokenCacheExpiry > new Date(Date.now() + 5 * 60 * 1000)) {
-      return tokenCache.token;
-    }
-
-    // Get token from database
-    const { data: tokenData, error } = await supabase
-      .from("beds24_tokens")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error("Token não encontrado. Por favor, configure na página de Configurações.");
-    }
-
-    if (!tokenData) {
-      throw new Error("Token não encontrado. Por favor, configure na página de Configurações.");
-    }
-
-    const token = tokenData as Beds24Token;
-    const expiresAt = new Date(token.expires_at);
-
-    // Check if token is expired
-    if (expiresAt < new Date()) {
-      // Token expired, should refresh
-      // Since this would require refresh_token, we'll just notify the user for now
-      toast.error("O token da API Beds24 expirou. Por favor, atualize nas Configurações.");
-      throw new Error("Token expirado");
-    }
-
-    // Cache the token
-    tokenCache = token;
-    tokenCacheExpiry = expiresAt;
-    
-    return token.token;
-  } catch (error) {
-    console.error("Erro ao obter token Beds24:", error);
-    throw error;
-  }
-};
-
-/**
- * Saves or updates a Beds24 token in the database
- */
-export const saveBeds24Token = async (tokenData: Partial<Beds24Token>): Promise<Beds24Token> => {
-  try {
-    // Clear cache
-    tokenCache = null;
-    tokenCacheExpiry = null;
-
-    // Get user ID from auth context
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Usuário não autenticado");
-    
-    // Check if token already exists for this user
-    const { data: existingToken } = await supabase
-      .from("beds24_tokens")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    let result;
-    
-    if (existingToken) {
-      // Update existing token
-      const { data, error } = await supabase
-        .from("beds24_tokens")
-        .update({
-          token: tokenData.token,
-          expires_at: tokenData.expires_at,
-        })
-        .eq("id", existingToken.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      result = data;
-    } else {
-      // Insert new token
-      const { data, error } = await supabase
-        .from("beds24_tokens")
-        .insert({
-          token: tokenData.token,
-          expires_at: tokenData.expires_at,
-          user_id: user.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      result = data;
-    }
-    
-    toast.success("Token Beds24 salvo com sucesso!");
-    return result as Beds24Token;
-  } catch (error) {
-    console.error("Erro ao salvar token Beds24:", error);
-    toast.error("Erro ao salvar token. Tente novamente.");
-    throw error;
-  }
-};
-
-/**
- * Makes an authenticated request to the Beds24 API
+ * Makes a request to the Beds24 API via the PHP proxy
  */
 export const beds24Request = async <T>(
   endpoint: string,
@@ -183,27 +65,20 @@ export const beds24Request = async <T>(
   body?: object
 ): Promise<T> => {
   try {
-    const token = await getBeds24Token();
+    // Construct the URL with the endpoint
+    const url = `${PROXY_BASE_URL}?endpoint=${endpoint}`;
     
-    // Make direct API call to Beds24
-    const response = await fetch(`https://api.beds24.com/v2/${endpoint}`, {
+    // Make request to the PHP proxy
+    const response = await fetch(url, {
       method,
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      
-      // Check if token is expired based on the error
-      if (response.status === 401 || errorData?.message?.includes?.("token")) {
-        toast.error("Token da API expirado ou inválido. Atualize nas Configurações.");
-        throw new Error("Token inválido ou expirado");
-      }
-      
       throw new Error(`Erro na API Beds24: ${errorData.message || response.statusText}`);
     }
 
@@ -219,7 +94,7 @@ export const beds24Request = async <T>(
  */
 export const getProperties = async (): Promise<Beds24Property[]> => {
   try {
-    return beds24Request<Beds24Property[]>("/properties?includePictures=true&includeTexts=property&includeAllRooms=true");
+    return beds24Request<Beds24Property[]>("properties");
   } catch (error) {
     console.error("Erro ao buscar propriedades:", error);
     toast.error("Erro ao carregar propriedades. Verifique sua conexão com a API Beds24.");
@@ -237,15 +112,14 @@ export const getBookings = async (params: {
   status?: string;
 } = {}): Promise<Beds24Booking[]> => {
   try {
-    let queryParams = new URLSearchParams();
+    let queryString = "";
     
-    if (params.propertyId) queryParams.append("propId", params.propertyId);
-    if (params.startDate) queryParams.append("startDate", params.startDate);
-    if (params.endDate) queryParams.append("endDate", params.endDate);
-    if (params.status) queryParams.append("status", params.status);
+    if (params.propertyId) queryString += `&propId=${params.propertyId}`;
+    if (params.startDate) queryString += `&startDate=${params.startDate}`;
+    if (params.endDate) queryString += `&endDate=${params.endDate}`;
+    if (params.status) queryString += `&status=${params.status}`;
     
-    const endpoint = `/bookings?${queryParams.toString()}`;
-    return beds24Request<Beds24Booking[]>(endpoint);
+    return beds24Request<Beds24Booking[]>(`bookings${queryString}`);
   } catch (error) {
     console.error("Erro ao buscar reservas:", error);
     toast.error("Erro ao carregar reservas. Verifique sua conexão com a API Beds24.");
@@ -263,15 +137,14 @@ export const getAvailability = async (params: {
   endDate?: string;
 } = {}): Promise<any[]> => {
   try {
-    let queryParams = new URLSearchParams();
+    let queryString = "";
     
-    if (params.propertyId) queryParams.append("propId", params.propertyId);
-    if (params.roomId) queryParams.append("roomId", params.roomId);
-    if (params.startDate) queryParams.append("startDate", params.startDate);
-    if (params.endDate) queryParams.append("endDate", params.endDate);
+    if (params.propertyId) queryString += `&propId=${params.propertyId}`;
+    if (params.roomId) queryString += `&roomId=${params.roomId}`;
+    if (params.startDate) queryString += `&startDate=${params.startDate}`;
+    if (params.endDate) queryString += `&endDate=${params.endDate}`;
     
-    const endpoint = `/availabilities?${queryParams.toString()}`;
-    return beds24Request<any[]>(endpoint);
+    return beds24Request<any[]>(`availabilities${queryString}`);
   } catch (error) {
     console.error("Erro ao buscar disponibilidade:", error);
     toast.error("Erro ao carregar disponibilidade. Verifique sua conexão com a API Beds24.");
@@ -316,17 +189,12 @@ export const calculateMonthlyRevenue = async (month: number, year: number): Prom
 };
 
 /**
- * Gets active users count from Supabase
+ * Gets active users count 
  */
 export const getActiveUsersCount = async (): Promise<number> => {
   try {
-    const { count, error } = await supabase
-      .from("beds24_tokens")
-      .select("*", { count: "exact", head: true });
-    
-    if (error) throw error;
-    
-    return count || 0;
+    const users = await getBeds24Users();
+    return users.length || 0;
   } catch (error) {
     console.error("Erro ao buscar contagem de usuários:", error);
     throw error;
@@ -338,7 +206,7 @@ export const getActiveUsersCount = async (): Promise<number> => {
  */
 export const getBeds24Users = async (): Promise<Beds24User[]> => {
   try {
-    return beds24Request<Beds24User[]>("/users");
+    return beds24Request<Beds24User[]>("users");
   } catch (error) {
     console.error("Erro ao buscar usuários:", error);
     toast.error("Erro ao carregar usuários. Verifique sua conexão com a API Beds24.");
@@ -351,7 +219,7 @@ export const getBeds24Users = async (): Promise<Beds24User[]> => {
  */
 export const updateBeds24User = async (userId: string, userData: Partial<Beds24User>): Promise<any> => {
   try {
-    return beds24Request<any>(`/users/${userId}`, "PUT", userData);
+    return beds24Request<any>(`users/${userId}`, "PUT", userData);
   } catch (error) {
     console.error("Erro ao atualizar usuário:", error);
     toast.error("Erro ao atualizar usuário. Verifique sua conexão com a API Beds24.");
@@ -364,7 +232,7 @@ export const updateBeds24User = async (userId: string, userData: Partial<Beds24U
  */
 export const deleteBeds24User = async (userId: string): Promise<any> => {
   try {
-    return beds24Request<any>(`/users/${userId}`, "DELETE");
+    return beds24Request<any>(`users/${userId}`, "DELETE");
   } catch (error) {
     console.error("Erro ao excluir usuário:", error);
     toast.error("Erro ao excluir usuário. Verifique sua conexão com a API Beds24.");
@@ -377,7 +245,7 @@ export const deleteBeds24User = async (userId: string): Promise<any> => {
  */
 export const getUserProperties = async (userId: string): Promise<Beds24Property[]> => {
   try {
-    return beds24Request<Beds24Property[]>(`/properties?userId=${userId}`);
+    return beds24Request<Beds24Property[]>(`properties&userId=${userId}`);
   } catch (error) {
     console.error("Erro ao buscar propriedades do usuário:", error);
     toast.error("Erro ao carregar propriedades do usuário. Verifique sua conexão com a API Beds24.");
@@ -390,7 +258,7 @@ export const getUserProperties = async (userId: string): Promise<Beds24Property[
  */
 export const getPropertyBookings = async (propId: string): Promise<Beds24Booking[]> => {
   try {
-    return beds24Request<Beds24Booking[]>(`/bookings?propId=${propId}`);
+    return beds24Request<Beds24Booking[]>(`bookings&propId=${propId}`);
   } catch (error) {
     console.error("Erro ao buscar reservas da propriedade:", error);
     toast.error("Erro ao carregar reservas da propriedade. Verifique sua conexão com a API Beds24.");
@@ -403,7 +271,7 @@ export const getPropertyBookings = async (propId: string): Promise<Beds24Booking
  */
 export const getBookingDetails = async (bookId: string): Promise<Beds24Booking> => {
   try {
-    const bookings = await beds24Request<Beds24Booking[]>(`/bookings?bookId=${bookId}`);
+    const bookings = await beds24Request<Beds24Booking[]>(`bookings&bookId=${bookId}`);
     if (!bookings || bookings.length === 0) {
       throw new Error("Reserva não encontrada");
     }
@@ -506,6 +374,19 @@ export const getMonthlyOccupancy = async (): Promise<{ month: string; occupancy:
     return result;
   } catch (error) {
     console.error("Erro ao calcular ocupação mensal:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get account information
+ */
+export const getAccountInfo = async (): Promise<any> => {
+  try {
+    return beds24Request<any>("account");
+  } catch (error) {
+    console.error("Erro ao buscar informações da conta:", error);
+    toast.error("Erro ao carregar informações da conta. Verifique sua conexão com a API Beds24.");
     throw error;
   }
 };
