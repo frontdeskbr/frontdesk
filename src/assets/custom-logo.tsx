@@ -16,13 +16,13 @@ export const CustomLogo: React.FC<LogoProps> = ({ className, size = 42 }) => (
   />
 );
 
-export const TextLogo: React.FC<LogoProps & { hideText?: boolean }> = ({ 
+export const TextLogo: React.FC<LogoProps & { logoOnly?: boolean }> = ({ 
   className, 
   size = 32,
-  hideText = false
+  logoOnly = false
 }) => (
   <div className={`flex items-center gap-2 ${className}`}>
     <CustomLogo size={size} />
-    {!hideText && <span className="font-semibold text-xl">Frontdesk</span>}
+    {!logoOnly && <span className="font-semibold text-xl">Frontdesk</span>}
   </div>
 );

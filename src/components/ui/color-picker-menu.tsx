@@ -1,46 +1,59 @@
 
-import React from 'react';
-import { Palette } from 'lucide-react';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { useTheme } from '@/context/theme-context';
+import React from "react";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export function ColorPickerMenu() {
-  const { setPrimaryColor } = useTheme();
-  
-  const colorOptions = [
-    { name: 'Azul', value: 'blue', class: 'bg-blue-500' },
-    { name: 'Roxo', value: 'purple', class: 'bg-purple-500' },
-    { name: 'Verde', value: 'green', class: 'bg-green-500' },
-    { name: 'Teal', value: 'teal', class: 'bg-teal-500' },
-    { name: 'Âmbar', value: 'amber', class: 'bg-amber-500' }
+interface ColorPickerMenuProps {
+  triggerClassName?: string;
+}
+
+export const ColorPickerMenu: React.FC<ColorPickerMenuProps> = ({ triggerClassName }) => {
+  // Function to set theme color
+  const setThemeColor = (color: string) => {
+    document.documentElement.style.setProperty("--primary", color);
+    localStorage.setItem("theme-color", color);
+  };
+
+  // Predefined colors
+  const colors = [
+    { name: "Default Blue", value: "214 80% 56%" },
+    { name: "Purple", value: "262 80% 56%" },
+    { name: "Green", value: "142 76% 36%" },
+    { name: "Red", value: "0 72% 51%" },
+    { name: "Orange", value: "24 95% 53%" },
+    { name: "Pink", value: "330 81% 60%" },
+    { name: "Teal", value: "174 75% 37%" },
   ];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
-          <Palette size={18} />
-          <span className="sr-only">Alterar cores</span>
+        <Button variant="ghost" className={triggerClassName}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Tema</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {colorOptions.map((color) => (
+        {colors.map((color) => (
           <DropdownMenuItem
-            key={color.value}
-            onClick={() => setPrimaryColor(color.value as any)}
-            className="flex items-center gap-2 cursor-pointer"
+            key={color.name}
+            onClick={() => setThemeColor(color.value)}
+            className="flex items-center gap-2"
           >
-            <div className={`w-4 h-4 rounded-full ${color.class}`} />
+            <div
+              className="h-4 w-4 rounded-full border"
+              style={{ backgroundColor: `hsl(${color.value})` }}
+            />
             <span>{color.name}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
