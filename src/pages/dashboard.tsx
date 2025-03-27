@@ -161,7 +161,7 @@ const Dashboard: React.FC = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Distribuição de Canais 2</CardTitle>
+            <CardTitle>Distribuição de Canais</CardTitle>
             <CardDescription>Reservas por canal de distribuição</CardDescription>
           </CardHeader>
           <CardContent>
